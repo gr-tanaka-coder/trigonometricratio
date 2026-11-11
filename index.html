@@ -17,7 +17,7 @@
     #slopeSide { stroke:#d92319; }
     #verticalSide { stroke:#1768dc; }
     #horizontalSide { stroke:#72b646; }
-    .side-name { font:700 27px "Yu Gothic UI","Meiryo",sans-serif; paint-order:stroke; stroke:#fff; stroke-width:5px; stroke-linejoin:round; }
+    .side-name { font:700 60px "Yu Gothic UI","Meiryo",sans-serif; paint-order:stroke; stroke:#fff; stroke-width:5px; stroke-linejoin:round; }
     #slopeLabel { fill:var(--red); }
     #verticalLabel { fill:var(--blue); }
     #horizontalLabel { fill:var(--green); }
@@ -90,25 +90,27 @@
         <text id="horizontalLabel" class="side-name" text-anchor="middle" x="610" y="575">よこ</text>
 
         <g id="finalAnnotations" opacity="0" aria-label="同じ長さと、消えた縦の辺の説明">
-          <text x="432" y="365" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
-          <line x1="460" y1="378" x2="530" y2="513" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
-          <line x1="460" y1="378" x2="570" y2="539" stroke="#72b646" stroke-width="5" marker-end="url(#greenArrow)"/>
-          <path d="M 824 354 C 844 316, 958 314, 992 365 C 1023 413, 990 452, 938 462 L 978 516 L 904 462 C 850 451, 803 408, 824 354 Z" fill="#fff" stroke="#1768dc" stroke-width="7" stroke-linejoin="round"/>
-          <text x="913" y="406" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
+          <text x="180" y="365" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">同じ長さ！</text>
+          <line x1="390" y1="380" x2="560" y2="528" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
+          <line x1="390" y1="380" x2="660" y2="554" stroke="#72b646" stroke-width="5" marker-end="url(#greenArrow)"/>
+          <path d="M 748 350 C 774 285, 984 276, 1042 338 C 1091 391, 1064 469, 960 485 L 978 516 L 914 490 C 810 491, 719 438, 748 350 Z" fill="#fff" stroke="#1768dc" stroke-width="7" stroke-linejoin="round"/>
+          <text x="913" y="406" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">消えた！</text>
         </g>
 
         <g id="verticalAnnotations" opacity="0" aria-label="同じ長さと、消えた横の辺の説明">
-          <text x="650" y="118" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
+          <text x="650" y="118" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">同じ長さ！</text>
           <line x1="720" y1="135" x2="500" y2="180" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
           <line x1="720" y1="135" x2="524" y2="285" stroke="#1768dc" stroke-width="5" marker-end="url(#blueArrow)"/>
-          <path d="M 604 398 C 634 359, 773 360, 814 405 C 854 449, 823 502, 750 512 L 552 548 L 682 514 C 620 509, 572 456, 604 398 Z" fill="#fff" stroke="#72b646" stroke-width="7" stroke-linejoin="round"/>
-          <text x="680" y="455" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
+          <path d="M 558 390 C 590 327, 820 327, 875 390 C 932 448, 895 510, 800 524 L 552 548 L 720 510 C 630 515, 523 464, 558 390 Z" fill="#fff" stroke="#72b646" stroke-width="7" stroke-linejoin="round"/>
+          <text x="720" y="455" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">消えた！</text>
         </g>
 
         <g id="horizontalAnnotations" opacity="0" aria-label="消えた縦の辺と、同じ長さの斜辺と横の辺の説明">
+          <g transform="translate(0,-35)">
           <path d="M 110 315 C 137 274, 279 275, 327 329 C 367 375, 333 437, 258 449 L 310 510 L 220 458 C 150 457, 99 409, 110 315 Z" fill="#fff" stroke="#1768dc" stroke-width="7" stroke-linejoin="round"/>
-          <text x="220" y="390" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
-          <text x="875" y="400" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
+          <text x="220" y="390" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">消えた！</text>
+          </g>
+          <text x="875" y="400" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="60" font-weight="700">同じ長さ！</text>
           <line x1="970" y1="430" x2="780" y2="513" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
           <line x1="970" y1="430" x2="780" y2="539" stroke="#72b646" stroke-width="5" marker-end="url(#greenArrow)"/>
         </g>
@@ -316,4 +318,6 @@
     setControls();
   </script>
 </body>
+</html>
+
 </html>

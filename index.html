@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>直角三角形が縮んでいく</title>
+  <style>
+    :root { color-scheme: light; --axis:#77777a; --red:#d83d32; --blue:#2168ce; --green:#73aa46; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:20px; background:#f1f2f3; color:#333; font-family:"Yu Gothic UI","Meiryo",sans-serif; }
+    .app { width:min(1120px,100%); }
+    .stage { position:relative; overflow:hidden; width:100%; border:1px solid #e2e2e2; border-radius:8px; background:#fff; box-shadow:0 10px 35px #26364a12; }
+    svg { display:block; width:100%; height:auto; aspect-ratio:16/9; }
+    .axis { stroke:var(--axis); stroke-width:9; stroke-linecap:square; }
+    .axis-label { fill:#4d4d4f; font:italic 36px Georgia,"Times New Roman",serif; }
+    .side { fill:none; stroke-width:11; stroke-linecap:butt; stroke-linejoin:round; }
+    #slopeSide { stroke:#d92319; }
+    #verticalSide { stroke:#1768dc; }
+    #horizontalSide { stroke:#72b646; }
+    .side-name { font:700 27px "Yu Gothic UI","Meiryo",sans-serif; paint-order:stroke; stroke:#fff; stroke-width:5px; stroke-linejoin:round; }
+    #slopeLabel { fill:var(--red); }
+    #verticalLabel { fill:var(--blue); }
+    #horizontalLabel { fill:var(--green); }
+    .right-angle { fill:none; stroke:#222; stroke-width:4; }
+    .theta-arc { fill:none; stroke:#555; stroke-width:3; }
+    .theta-label { fill:#333; font:italic 28px Georgia,"Times New Roman",serif; }
+    .origin-dot { fill:#111; }
+    .circle-guide { fill:none; stroke:#aab2bb; stroke-width:2; stroke-dasharray:5 8; opacity:.55; pointer-events:none; }
+    .count { position:absolute; top:8%; right:4%; display:flex; align-items:center; justify-content:center; gap:2px; width:22%; height:20%; border:3px solid #252525; border-radius:12px; color:#c92720; background:#fff4d5; font-family:Arial,"Yu Gothic UI",sans-serif; font-size:clamp(24px,5vw,68px); font-weight:400; opacity:0; transition:opacity .25s ease; }
+    .count.is-left { right:auto; left:7%; }
+    .zero-digit { display:inline-block; font-variant-numeric:lining-nums; }
+    .degree-mark { align-self:center; margin-top:-.55em; font-size:.48em; line-height:1; }
+    .controls { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 4px 0; }
+    .caption { color:#777; font-size:13px; }
+    .control-actions { display:flex; align-items:center; gap:14px; }
+    .jump-buttons { display:flex; gap:6px; }
+    .jump-buttons button { min-width:62px; height:40px; padding:0 10px; font-size:14px; }
+    .buttons { display:flex; gap:9px; }
+    button { min-width:106px; height:44px; padding:0 16px; border:1px solid #cfd4da; border-radius:8px; color:#343a40; background:white; font:700 15px "Yu Gothic UI","Meiryo",sans-serif; cursor:pointer; }
+    button:hover:not(:disabled) { background:#f7f8f9; }
+    button:focus-visible { outline:3px solid #82b9f2; outline-offset:2px; }
+    button:disabled { opacity:.42; cursor:default; }
+    button.primary { border-color:#363b41; color:#fff; background:#363b41; }
+    button.primary:hover:not(:disabled) { background:#22262b; }
+    @media(max-width:620px) {
+      body { padding:10px; align-items:start; padding-top:7vh; }
+      .count { border-width:2px; border-radius:8px; }
+      .controls { align-items:flex-end; gap:8px; }
+      .control-actions { gap:6px; flex-direction:column-reverse; align-items:flex-end; }
+      .jump-buttons { gap:4px; }
+      .jump-buttons button { min-width:49px; height:34px; padding:0 6px; font-size:12px; }
+      .caption { max-width:42%; font-size:11px; line-height:1.5; }
+      button { min-width:82px; height:41px; padding:0 10px; font-size:13px; }
+    }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="直角三角形の縮小アニメーション">
+    <section class="stage" aria-label="座標軸上で縮んでいく直角三角形">
+      <div class="count" id="stepCount" aria-live="polite"><span class="theta-prefix">θ＝</span><span id="angleDigits" class="zero-digit">0</span><sup class="degree-mark">°</sup></div>
+      <svg viewBox="0 0 1152 648" role="img" aria-labelledby="title description">
+        <title id="title">三角比の直角三角形の変化</title>
+        <desc id="description">進むボタンで色分けされた直角三角形が縮み、垂直になった後、x軸の左側に新しい直角三角形が表示されます。</desc>
+        <defs>
+          <marker id="arrow" markerWidth="18" markerHeight="18" refX="13" refY="9" orient="auto" markerUnits="userSpaceOnUse"><path d="M2 2 L14 9 L2 16" fill="none" stroke="#77777a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+          <marker id="redArrow" markerWidth="15" markerHeight="15" refX="12" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L15 7.5 L0 15 Z" fill="#d92319"/></marker>
+          <marker id="blueArrow" markerWidth="15" markerHeight="15" refX="12" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L15 7.5 L0 15 Z" fill="#1768dc"/></marker>
+          <marker id="greenArrow" markerWidth="15" markerHeight="15" refX="12" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L15 7.5 L0 15 Z" fill="#72b646"/></marker>
+        </defs>
+        <!-- A fixed-radius semicircle shows how the endpoint moves. -->
+        <path id="circleGuide" class="circle-guide" d="M 40 540 A 460 460 0 0 1 960 540"/>
+        <!-- Coordinate axes -->
+        <line id="xAxis" class="axis" x1="300" y1="525" x2="960" y2="525" marker-end="url(#arrow)"/>
+        <line id="yAxis" class="axis" x1="410" y1="625" x2="410" y2="70" marker-end="url(#arrow)"/>
+        <text id="xAxisLabel" class="axis-label" x="971" y="550">x</text>
+        <text id="yAxisLabel" class="axis-label" x="365" y="68">y</text>
+
+        <!-- The right triangle -->
+        <line id="horizontalSide" class="side" x1="410" y1="525" x2="810" y2="525"/>
+        <line id="verticalSide" class="side" x1="810" y1="525" x2="810" y2="170"/>
+        <line id="slopeSide" class="side" x1="410" y1="525" x2="810" y2="170"/>
+        <path id="rightAngle" class="right-angle" d="M 784 525 V 499 H 810"/>
+        <path id="thetaArc" class="theta-arc" opacity="0"/>
+        <text id="thetaLabel" class="theta-label" text-anchor="middle" opacity="0">θ</text>
+        <circle id="originDot" class="origin-dot" cx="410" cy="525" r="5"/>
+
+        <text id="slopeLabel" class="side-name" text-anchor="middle" x="565" y="350">ななめ</text>
+        <text id="verticalLabel" class="side-name" text-anchor="start" x="830" y="370">たて</text>
+        <text id="horizontalLabel" class="side-name" text-anchor="middle" x="610" y="575">よこ</text>
+
+        <g id="finalAnnotations" opacity="0" aria-label="同じ長さと、消えた縦の辺の説明">
+          <text x="432" y="365" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
+          <line x1="460" y1="378" x2="530" y2="513" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
+          <line x1="460" y1="378" x2="570" y2="539" stroke="#72b646" stroke-width="5" marker-end="url(#greenArrow)"/>
+          <path d="M 824 354 C 844 316, 958 314, 992 365 C 1023 413, 990 452, 938 462 L 978 516 L 904 462 C 850 451, 803 408, 824 354 Z" fill="#fff" stroke="#1768dc" stroke-width="7" stroke-linejoin="round"/>
+          <text x="913" y="406" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
+        </g>
+
+        <g id="verticalAnnotations" opacity="0" aria-label="同じ長さと、消えた横の辺の説明">
+          <text x="650" y="118" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
+          <line x1="720" y1="135" x2="500" y2="180" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
+          <line x1="720" y1="135" x2="524" y2="285" stroke="#1768dc" stroke-width="5" marker-end="url(#blueArrow)"/>
+          <path d="M 604 398 C 634 359, 773 360, 814 405 C 854 449, 823 502, 750 512 L 552 548 L 682 514 C 620 509, 572 456, 604 398 Z" fill="#fff" stroke="#72b646" stroke-width="7" stroke-linejoin="round"/>
+          <text x="680" y="455" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
+        </g>
+
+        <g id="horizontalAnnotations" opacity="0" aria-label="消えた縦の辺と、同じ長さの斜辺と横の辺の説明">
+          <path d="M 110 315 C 137 274, 279 275, 327 329 C 367 375, 333 437, 258 449 L 310 510 L 220 458 C 150 457, 99 409, 110 315 Z" fill="#fff" stroke="#1768dc" stroke-width="7" stroke-linejoin="round"/>
+          <text x="220" y="390" text-anchor="middle" fill="#181818" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="31" font-weight="700">消えた！</text>
+          <text x="875" y="400" fill="#202020" font-family="Yu Gothic UI, Meiryo, sans-serif" font-size="32" font-weight="700">同じ長さ！</text>
+          <line x1="970" y1="430" x2="780" y2="513" stroke="#d92319" stroke-width="5" marker-end="url(#redArrow)"/>
+          <line x1="970" y1="430" x2="780" y2="539" stroke="#72b646" stroke-width="5" marker-end="url(#greenArrow)"/>
+        </g>
+
+      </svg>
+    </section>
+
+    <div class="controls">
+      <div class="caption" id="caption" aria-live="polite">赤：ななめ　青：たて　緑：よこ</div>
+      <div class="control-actions">
+        <div class="jump-buttons" aria-label="角度の場面へ移動">
+          <button type="button" data-step="0">0°</button>
+          <button type="button" data-step="3">90°</button>
+          <button type="button" data-step="6">180°</button>
+        </div>
+        <div class="buttons">
+          <button id="backButton" type="button" disabled>戻る</button>
+          <button id="nextButton" class="primary" type="button">進む　›</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const origin = { y: 540 };
+    const radius = 460;
+    const initial = { height: 325, baseWidth: 325, originX: 500, axisLeft: 40, axisRight: 1000, slopeTopShiftX: 0, verticalShiftX: 0, slopeGap: 0, baseGap: 0, rightAngle: 1, vertical: 1, badge: 1, angle: 45, badgeLeft: 0, annotations: 0, verticalAnnotations: 0, horizontalAnnotations: 0 };
+    const flattened = { ...initial, height: 0, baseWidth: radius, slopeGap: 12, baseGap: 14, rightAngle: 0, vertical: 0, badge: 1, angle: 0 };
+    const explained = { ...flattened, annotations: 1 };
+    const secondTriangle = { ...initial, height: 325, baseWidth: 325, angle: 45 };
+    const narrowTriangle = { ...initial, height: radius, baseWidth: 0, verticalShiftX: 24, rightAngle: 0, badge: 1, angle: 90 };
+    const verticalExplained = { ...narrowTriangle, badge: 1, verticalAnnotations: 1 };
+    const leftTriangle = { ...initial, height: 325, baseWidth: -325, originX: 780, axisLeft: 40, axisRight: 1000, rightAngle: 1, angle: 135 };
+    const flatLeftTriangle = { ...leftTriangle, height: 0, baseWidth: -radius, slopeGap: 12, baseGap: 14, rightAngle: 0, vertical: 0, badge: 1, angle: 180, badgeLeft: 0 };
+    const flatLeftExplained = { ...flatLeftTriangle, horizontalAnnotations: 1 };
+    const scenes = [initial, flattened, explained, secondTriangle, narrowTriangle, verticalExplained, leftTriangle, flatLeftTriangle, flatLeftExplained];
+    const $ = (id) => document.getElementById(id);
+    let step = 0;
+    let frameId = 0;
+    let moving = false;
+
+    function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function draw(state) {
+      const floorY = origin.y;
+      const ox = state.originX;
+      $("circleGuide").setAttribute("d", `M ${ox - radius} ${floorY} A ${radius} ${radius} 0 0 1 ${ox + radius} ${floorY}`);
+      const baseEnd = ox + state.baseWidth;
+      const verticalX = baseEnd + state.verticalShiftX;
+      const slopeEndX = baseEnd + state.slopeTopShiftX;
+      const topY = floorY - state.height - state.slopeGap;
+      const slopeStartY = floorY - state.slopeGap;
+      const baseY = floorY + state.baseGap;
+      $("xAxis").setAttribute("x1", state.axisLeft);
+      $("xAxis").setAttribute("y1", floorY);
+      $("xAxis").setAttribute("x2", state.axisRight);
+      $("xAxis").setAttribute("y2", floorY);
+      $("xAxisLabel").setAttribute("x", state.axisRight + 10);
+      $("yAxis").setAttribute("x1", ox);
+      $("yAxis").setAttribute("x2", ox);
+      $("yAxisLabel").setAttribute("x", ox - 45);
+      $("originDot").setAttribute("cx", ox);
+      $("horizontalSide").setAttribute("x1", ox);
+      $("horizontalSide").setAttribute("y1", baseY);
+      $("horizontalSide").setAttribute("x2", baseEnd);
+      $("horizontalSide").setAttribute("y2", baseY);
+      $("verticalSide").setAttribute("x1", verticalX);
+      $("verticalSide").setAttribute("y1", baseY);
+      $("verticalSide").setAttribute("x2", verticalX);
+      $("verticalSide").setAttribute("y2", topY);
+      $("verticalSide").style.opacity = state.vertical;
+      $("slopeSide").setAttribute("x1", ox);
+      $("slopeSide").setAttribute("y1", slopeStartY);
+      $("slopeSide").setAttribute("x2", slopeEndX);
+      $("slopeSide").setAttribute("y2", topY);
+      const insideDirection = Math.sign(state.baseWidth || 1);
+      $("rightAngle").setAttribute("d", `M ${verticalX - insideDirection * 26} ${baseY} V ${baseY - 26} H ${verticalX}`);
+      $("rightAngle").style.opacity = state.rightAngle;
+      const thetaVisible = state.rightAngle > 0.01 && state.height > 20 && Math.abs(state.baseWidth) > 20;
+      if (thetaVisible) {
+        const lineAngle = state.angle * Math.PI / 180;
+        const thetaRadius = 48;
+        const arcEndX = ox + thetaRadius * Math.cos(lineAngle);
+        const arcEndY = floorY - thetaRadius * Math.sin(lineAngle);
+        const startX = state.baseWidth > 0 ? ox + thetaRadius : ox - thetaRadius;
+        const sweep = state.baseWidth > 0 ? 0 : 1;
+        $("thetaArc").setAttribute("d", `M ${startX} ${floorY} A ${thetaRadius} ${thetaRadius} 0 0 ${sweep} ${arcEndX} ${arcEndY}`);
+        const midAngle = state.baseWidth > 0 ? state.angle / 2 : (180 + state.angle) / 2;
+        const midRadians = midAngle * Math.PI / 180;
+        $("thetaLabel").setAttribute("x", ox + 72 * Math.cos(midRadians));
+        $("thetaLabel").setAttribute("y", floorY - 72 * Math.sin(midRadians) + 9);
+        $("thetaArc").style.opacity = state.rightAngle;
+        $("thetaLabel").style.opacity = state.rightAngle;
+      } else {
+        $("thetaArc").style.opacity = 0;
+        $("thetaLabel").style.opacity = 0;
+      }
+
+      const slopeLabelX = state.baseWidth < 50 && state.baseWidth >= 0 ? ox - 85 : ox + (state.baseWidth + state.slopeTopShiftX) * .48;
+      $("slopeLabel").setAttribute("x", slopeLabelX);
+      $("slopeLabel").setAttribute("y", slopeStartY - state.height * .48 - 17);
+      $("verticalLabel").setAttribute("x", verticalX + (state.baseWidth < 0 ? -28 : 28));
+      $("verticalLabel").setAttribute("text-anchor", state.baseWidth < 0 ? "end" : "start");
+      const verticalLabelY = state.height < 3 && state.slopeGap > 30 ? floorY + 18 : state.height < 3 ? floorY - state.slopeGap - 4 : floorY - state.height * .48 + 8;
+      $("verticalLabel").setAttribute("y", verticalLabelY);
+      $("horizontalLabel").setAttribute("x", ox + state.baseWidth * .5);
+      $("horizontalLabel").setAttribute("y", baseY + 48);
+      $("stepCount").style.opacity = state.badge;
+      $("stepCount").classList.toggle("is-left", state.badgeLeft > .5);
+      $("angleDigits").textContent = `${Math.round(state.angle)}`;
+      $("finalAnnotations").style.opacity = state.annotations;
+      $("verticalAnnotations").style.opacity = state.verticalAnnotations;
+      $("horizontalAnnotations").style.opacity = state.horizontalAnnotations;
+    }
+
+    function setControls() {
+      $("caption").textContent = [
+        "赤：ななめ　青：たて　緑：よこ。ななめの長さは半円の半径です。",
+        "0°では半円の右端。ななめとよこは同じ長さです。",
+        "たてが消え、ななめとよこの長さが同じことを示しています。",
+        "半円に沿って角度が進み、直角三角形が再び現れます。",
+        "90°では半円の頂点。ななめとたては同じ長さです。",
+        "ななめとたては同じ長さ、よこの線は消えたことを示しています。",
+        "半円に沿って左側へ進み、直角三角形が現れます。",
+        "180°では半円の左端。ななめとよこが重なります。",
+        "消えた縦の辺と、同じ長さの斜辺・横の辺を示しています。"
+      ][step];
+      $("backButton").disabled = moving || step === 0;
+      $("nextButton").disabled = moving || step === 8;
+      document.querySelectorAll(".jump-buttons button").forEach((button) => {
+        const targetStep = Number(button.dataset.step);
+        button.disabled = moving || step === targetStep;
+        button.setAttribute("aria-current", step === targetStep ? "step" : "false");
+      });
+      $("nextButton").textContent = "進む　›";
+    }
+
+    function jumpTo(targetStep) {
+      if (moving || step === targetStep) return;
+      animateState(scenes[step], scenes[targetStep], targetStep, 1100);
+    }
+
+    function animateState(from, to, targetStep, durationMs = 1050) {
+      if (moving) return;
+      cancelAnimationFrame(frameId);
+      const started = performance.now();
+      const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : durationMs;
+      step = targetStep;
+      moving = true;
+      setControls();
+      function animate(now) {
+        const t = Math.min(1, (now - started) / duration);
+        const eased = ease(t);
+        const state = {};
+        for (const key of Object.keys(initial)) state[key] = from[key] + (to[key] - from[key]) * eased;
+        // During angle changes, keep the red side at a fixed radius and move
+        // its endpoint along the semicircle: x = r cos(theta), y = r sin(theta).
+        if (Math.abs(to.angle - from.angle) > 0.001) {
+          const radians = state.angle * Math.PI / 180;
+          state.baseWidth = radius * Math.cos(radians);
+          state.height = radius * Math.sin(radians);
+        }
+        draw(state);
+        if (t < 1) frameId = requestAnimationFrame(animate);
+        else {
+          draw(to);
+          moving = false;
+          setControls();
+        }
+      }
+      frameId = requestAnimationFrame(animate);
+    }
+
+    function advance() {
+      if (step === 0) animateState(initial, flattened, 1);
+      else if (step === 1) animateState(flattened, explained, 2, 650);
+      else if (step === 2) animateState(explained, secondTriangle, 3, 1100);
+      else if (step === 3) animateState(secondTriangle, narrowTriangle, 4, 1100);
+      else if (step === 4) animateState(narrowTriangle, verticalExplained, 5, 650);
+      else if (step === 5) animateState(verticalExplained, leftTriangle, 6, 1100);
+      else if (step === 6) animateState(leftTriangle, flatLeftTriangle, 7, 1100);
+      else if (step === 7) animateState(flatLeftTriangle, flatLeftExplained, 8, 650);
+    }
+
+    function goBack() {
+      if (step === 8) animateState(flatLeftExplained, flatLeftTriangle, 7, 500);
+      else if (step === 7) animateState(flatLeftTriangle, leftTriangle, 6, 1100);
+      else if (step === 6) animateState(leftTriangle, verticalExplained, 5, 1100);
+      else if (step === 5) animateState(verticalExplained, narrowTriangle, 4, 500);
+      else if (step === 4) animateState(narrowTriangle, secondTriangle, 3, 1100);
+      else if (step === 3) animateState(secondTriangle, explained, 2, 1100);
+      else if (step === 2) animateState(explained, flattened, 1, 500);
+      else if (step === 1) animateState(flattened, initial, 0);
+    }
+
+    $("backButton").addEventListener("click", goBack);
+    $("nextButton").addEventListener("click", advance);
+    document.querySelectorAll(".jump-buttons button").forEach((button) => {
+      button.addEventListener("click", () => jumpTo(Number(button.dataset.step)));
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") advance();
+      if (event.key === "ArrowLeft") goBack();
+    });
+    draw(initial);
+    setControls();
+  </script>
+</body>
+</html>
